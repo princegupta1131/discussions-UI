@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DiscussionUiModule } from 'projects/discussion-ui/src/public-api';
+import { DiscussionUiModule } from 'dist/discussion-ui';
 
 
 
