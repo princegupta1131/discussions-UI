@@ -1,4 +1,6 @@
 nvm use 14
-npm install
+yarn
 npm run build-lib
-npm publish ./dist/discussion-ui
+cd ./dist/discussion-ui
+# npm publish
+npm publish --tag beta

@@ -1,91 +1,145 @@
+import { TelemetryUtilsService } from './../../telemetry-utils.service';
 import { DiscussionService } from './../../services/discussion.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Renderer2 } from '@angular/core';
 import { NSDiscussData } from './../../models/discuss.model';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import * as CONSTANTS from '../../common/constants.json';
 /* tslint:disable */
 import * as _ from 'lodash'
+import { Subscription } from 'rxjs';
+import { ConfigService } from '../../services/config.service';
 /* tslint:enable */
+import { Location } from '@angular/common';
 
+const MSGS = {
+  deletePost: `Are you sure you want to delete this Post? This can't be undone.`,
+  deleteTopic: `Are you sure you want to delete this topic? Your action cannot be undone.`
+};
 
 @Component({
   selector: 'lib-discussion-details',
   templateUrl: './discussion-details.component.html',
-  styleUrls: ['./discussion-details.component.css']
+  styleUrls: ['./discussion-details.component.scss']
 })
-export class DiscussionDetailsComponent implements OnInit {
-  topicId: any;
+export class DiscussionDetailsComponent implements OnInit, OnDestroy {
+  @Input() topicId: any;
+  @Input() slug: string;
+
   routeParams: any;
   currentActivePage = 1;
   currentFilter = 'timestamp'; // 'recent
   data: any;
   paginationData!: any;
   pager = {};
-  slug: string;
   postAnswerForm!: FormGroup;
+  UpdatePostAnswerForm: FormGroup;
   replyForm: FormGroup;
   fetchSingleCategoryLoader = false;
+  paramsSubscription: Subscription;
+  editMode = false;
+  updatedPost = false;
+  contentPost: any;
+  editContentIndex: any;
+  mainUid: number;
+  similarPosts: any[];
+  showEditTopicModal = false;
+  editableTopicDetails: any;
+  dropdownContent = true;
+  categoryId: any;
+  showLoader = false;
 
   constructor(
     private route: ActivatedRoute,
     private discussionService: DiscussionService,
+    private configService: ConfigService,
     private formBuilder: FormBuilder,
-    public router: Router
-  ) { }
-
-  ngOnInit() {
-    this.initializeFormFiled();
-    this.route.params.subscribe(params => {
-      this.routeParams = params;
-      this.slug = _.get(this.routeParams, 'slug');
-      this.topicId = _.get(this.routeParams, 'topicId');
-      this.refreshPostData(this.currentActivePage);
-    });
-
-    this.route.queryParams.subscribe(x => {
-      if (x.page) {
-        this.currentActivePage = x.page || 1;
-        this.refreshPostData(this.currentActivePage);
+    public router: Router,
+    private telemetryUtils: TelemetryUtilsService,
+    private renderer: Renderer2,
+    private location: Location
+  ) {
+    /**
+     * @description - It will check for the outside click while kebab menu is in open mode.
+     */
+    this.renderer.listen('window', 'click', (e: Event) => {
+      // tslint:disable-next-line:no-string-literal
+      if (e.target['id'] !== 'group-actions') {
+        this.dropdownContent = true;
       }
     });
   }
+
+  ngOnInit() {
+    this.initializeFormFiled();
+    if (!this.topicId && !this.slug) {
+      this.route.params.subscribe(params => {
+        this.routeParams = params;
+        this.slug = _.get(this.routeParams, 'slug');
+        this.topicId = _.get(this.routeParams, 'topicId');
+        this.refreshPostData(this.currentActivePage);
+        // this.getRealtedDiscussion(this.cid)
+      });
+    } else {
+      this.refreshPostData(this.currentActivePage);
+      // this.getRealtedDiscussion(this.cid)
+    }
+
+
+    this.telemetryUtils.logImpression(NSDiscussData.IPageName.DETAILS);
+  }
+
+
+
   initializeFormFiled() {
     this.postAnswerForm = this.formBuilder.group({
       answer: [],
     });
-
+    this.UpdatePostAnswerForm = this.formBuilder.group({
+      updatedAnswer: [],
+    });
     this.replyForm = this.formBuilder.group({
       reply: []
     });
   }
 
-  refreshPostData(page: any) {
+  async refreshPostData(page?: any) {
     if (this.currentFilter === 'timestamp') {
-      console.log('from component refreshPostData method', this.slug);
+
       this.discussionService.fetchTopicById(this.topicId, this.slug, page).subscribe(
         (data: NSDiscussData.IDiscussionData) => {
-          this.data = data;
-          this.paginationData = data.pagination;
-          this.setPagination();
+          this.appendResponse(data)
+          this.showLoader = true;
         },
         (err: any) => {
-          // toast message
-         // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
-        });
-    } else {
-      console.log('from component refreshPostData method else', this.slug);
-      this.discussionService.fetchTopicByIdSort(this.topicId, 'voted', page).subscribe(
-        (data: NSDiscussData.IDiscussionData) => {
-          this.data = data;
-          this.paginationData = data.pagination;
-          this.setPagination();
-        },
-        (err: any) => {
+          // error code check
+          this.discussionService.showTrafficAlert(err);
+          console.log('Error in fetching topics')
           // toast message
           // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
         });
+    } else {
+      this.discussionService.fetchTopicByIdSort(this.topicId, 'voted', page).subscribe(
+        (data: NSDiscussData.IDiscussionData) => {
+          this.appendResponse(data)
+          this.showLoader = true;
+        },
+        (err: any) => {
+          // error code check
+          this.discussionService.showTrafficAlert(err);
+          console.log('Error in fetching topics')
+        });
     }
   }
+
+  appendResponse(data) {
+    this.data = data;
+    this.paginationData = _.get(data, 'pagination');
+    this.mainUid = _.get(data, 'loggedInUser.uid');
+    this.categoryId = _.get(data, 'cid');
+    this.topicId = _.get(data, 'tid');
+  }
+
 
   setPagination() {
     this.pager = {
@@ -121,6 +175,8 @@ export class DiscussionDetailsComponent implements OnInit {
           this.refreshPostData(this.currentActivePage);
         },
         (err: any) => {
+          // error code check
+          this.discussionService.showTrafficAlert(err);
           // toast
           // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
         });
@@ -128,45 +184,49 @@ export class DiscussionDetailsComponent implements OnInit {
   }
 
   bookmark(discuss: any) {
-    this.discussionService.bookmarkPost(discuss.pid).subscribe( data => {
-        // toast
-        // this.openSnackbar('Bookmark added successfully!');
-        this.refreshPostData(this.currentActivePage);
-      },
+    this.discussionService.bookmarkPost(discuss.pid).subscribe(data => {
+      // toast
+      // this.openSnackbar('Bookmark added successfully!');
+      this.refreshPostData(this.currentActivePage);
+    },
       (err: any) => {
+        // error code check
+        this.discussionService.showTrafficAlert(err);
         // toast
-       // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
+        // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
       });
   }
 
   unBookMark(discuss: any) {
-    this.discussionService.deleteBookmarkPost(discuss.pid).subscribe( data => {
-       // toast
-        this.refreshPostData(this.currentActivePage);
-      },
-      (err: any) => {
-        // toast
-        // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
-      });
-  }
-
-  delteVote(discuss: any) {
-    this.discussionService.deleteVotePost(discuss.pid).subscribe( data => {
+    this.discussionService.deleteBookmarkPost(discuss.pid).subscribe(data => {
       // toast
-        this.refreshPostData(this.currentActivePage);
-      },
+      this.refreshPostData(this.currentActivePage);
+    },
       (err: any) => {
+        // error code check
+        this.discussionService.showTrafficAlert(err);
         // toast
         // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
       });
   }
 
-  postReply(post: NSDiscussData.IDiscussionData) {
+  deleteVote(discuss: any) {
+    this.discussionService.deleteVotePost(discuss.pid).subscribe(data => {
+      // toast
+      this.refreshPostData(this.currentActivePage);
+    },
+      (err: any) => {
+        // error code check
+        this.discussionService.showTrafficAlert(err);
+        // toast
+        // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
+      });
+  }
+
+  postReply(replyContent: string, post: NSDiscussData.IDiscussionData) {
     const req = {
-      // tslint:disable-next-line:no-string-literal
-      content: this.postAnswerForm.controls['answer'].value,
+      content: replyContent,
     };
-    // tslint:disable-next-line:no-string-literal
     this.postAnswerForm.controls['answer'].setValue('');
     if (post && post.tid) {
       this.discussionService.replyPost(post.tid, req).subscribe(
@@ -177,17 +237,17 @@ export class DiscussionDetailsComponent implements OnInit {
           this.refreshPostData(this.currentActivePage);
         },
         (err: any) => {
+          // error code check
+          this.discussionService.showTrafficAlert(err);
           // toast
           // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
         });
     }
   }
 
-  postCommentsReply(post: NSDiscussData.IPosts) {
-    console.log('<><><><><>', post);
+  postCommentsReply(replyContent: string, post: NSDiscussData.IPosts) {
     const req = {
-      // tslint:disable-next-line:no-string-literal
-      content: this.replyForm.controls['reply'].value,
+      content: replyContent,
       toPid: post.pid,
     };
     if (post && post.tid) {
@@ -198,9 +258,17 @@ export class DiscussionDetailsComponent implements OnInit {
           this.refreshPostData(this.currentActivePage);
         },
         (err: any) => {
+          // error code check
+          this.discussionService.showTrafficAlert(err);
           // toast
           // this.openSnackbar(err.error.message.split('|')[1] || this.defaultError);
         });
+    }
+  }
+
+  confirmDelete(pid) {
+    if (window.confirm(MSGS.deletePost)) {
+      this.deletePost(pid);
     }
   }
 
@@ -213,7 +281,7 @@ export class DiscussionDetailsComponent implements OnInit {
 
   navigateWithPage(page: any) {
     if (page !== this.currentActivePage) {
-      this.router.navigate([`/discussion/category/${this.topicId}`], { queryParams: { page } });
+      this.router.navigate([`${this.configService.getRouterSlug()}${CONSTANTS.ROUTES.CATEGORY} ${this.topicId}`], { queryParams: { page } });
     }
   }
 
@@ -245,6 +313,160 @@ export class DiscussionDetailsComponent implements OnInit {
 
   getContrast() {
     return 'rgba(255, 255, 255, 80%)';
+  }
+
+  logTelemetry(event, data?) {
+    const pid = _.get(data, 'pid') || _.get(data, 'mainPid') ?
+      { id: _.get(data, 'pid') || _.get(data, 'mainPid'), type: 'Post' } : {};
+    this.telemetryUtils.uppendContext(pid);
+    this.telemetryUtils.logInteract(event, NSDiscussData.IPageName.DETAILS);
+  }
+
+  onEditMode(UpdatePostStatus: boolean) {
+    if (UpdatePostStatus) {
+      this.editMode = true;
+    } else {
+      this.editMode = false;
+    }
+  }
+
+  getRealtimePost(post: any, index: any) {
+    this.editMode = true;
+    this.editContentIndex = index;
+    this.contentPost = _.get(post, 'content').replace(/<[^>]*>/g, '');
+    post.toggle = false;
+  }
+
+  updatePost(updatedPostContent: any, pid: number) {
+    this.editMode = false;
+    const req = {
+      content: updatedPostContent,
+      title: '',
+      tags: [],
+      uid: this.mainUid
+    };
+    this.discussionService.editPost(pid, req).subscribe((data: any) => {
+      // TODO: Success toast
+      this.refreshPostData(this.currentActivePage);
+    }, (error) => {
+      // error code check
+      this.discussionService.showTrafficAlert(error);
+      // TODO: error toast
+      console.log('e', error);
+    });
+    console.log(pid);
+  }
+
+  deletePost(postId: number) {
+    this.discussionService.deletePost(postId, this.mainUid).subscribe((data: any) => {
+      // TODO: Success toast
+      this.refreshPostData(this.currentActivePage);
+    }, (error) => {
+      // error code check
+      this.discussionService.showTrafficAlert(error);
+      // TODO: error toast
+      console.log('e', error);
+    });
+  }
+
+  editReplyHandler(event, post) {
+    if (_.get(event, 'action') === 'cancel') {
+      this.onEditMode(false);
+    } else if (_.get(event, 'action') === 'edit') {
+      this.updatePost(_.get(event, 'content'), _.get(post, 'pid'));
+      this.logTelemetry(event, post);
+    }
+  }
+
+  commentReplyHandler(event, post) {
+    if (_.get(event, 'action') === 'cancel') {
+      this.togglePost(post);
+    } else if (_.get(event, 'action') === 'reply') {
+      this.postCommentsReply(_.get(event, 'content'), post);
+      this.logTelemetry(event, post);
+    }
+  }
+
+  postReplyHandler(event, post) {
+    if (_.get(event, 'action') === 'reply') {
+      this.postReply(_.get(event, 'content'), post);
+      this.logTelemetry(event, post);
+    }
+  }
+
+  togglePost(post) {
+    post.toggle = !post.toggle;
+    this.onEditMode(false);
+  }
+
+  /**
+   * @description - It will trigger the event handlers and close the update thread popup.
+   */
+  closeModal(event: any) {
+    console.log('close event', event);
+    if (_.get(event, 'action') === 'update') {
+      this.editTopicHandler(event, _.get(event, 'tid'), _.get(event, 'request'));
+    }
+    this.showEditTopicModal = false;
+  }
+
+  /**
+   * @description - It will open update thread popup.
+   */
+  editTopic(event, topicData) {
+    this.showEditTopicModal = true;
+    this.logTelemetry(event, topicData);
+  }
+
+  /**
+   * @description - It will all the update topic api. If success, then will refresh the data.
+   */
+  editTopicHandler(event, tid, updateTopicRequest) {
+    this.logTelemetry(event, this.editableTopicDetails);
+    this.discussionService.editPost(tid, updateTopicRequest).subscribe(data => {
+      console.log('update success', data);
+      this.refreshPostData(this.currentActivePage);
+    }, error => {
+      // error code check
+      this.discussionService.showTrafficAlert(error);
+      console.log('error while updating', error);
+    });
+  }
+
+  /**
+   * @description - It will open the confirmation popup before deleting the topic,
+   *                If clicked yes, then will call the delete topic handler.
+   */
+  deleteTopic(event, topicData) {
+    if (window.confirm(MSGS.deleteTopic)) {
+      this.logTelemetry(event, topicData);
+      this.deleteTopicHandler(_.get(topicData, 'tid'));
+    }
+  }
+
+  /**
+   * @description - It will all the delete topic api. If success, then will navigate back to the previous page.
+   */
+  deleteTopicHandler(topicId) {
+    this.discussionService.deleteTopic(topicId).subscribe(data => {
+      this.location.back();
+    }, error => {
+      // error code check
+      this.discussionService.showTrafficAlert(error);
+      console.log('error while deleting', error);
+    });
+  }
+  /**
+   * @description - It will toggle the kebab menu click
+   */
+  onMenuClick() {
+    this.dropdownContent = !this.dropdownContent;
+  }
+
+  ngOnDestroy() {
+    if (this.paramsSubscription) {
+      this.paramsSubscription.unsubscribe();
+    }
   }
 
 }

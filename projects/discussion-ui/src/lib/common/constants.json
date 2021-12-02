@@ -583,5 +583,34 @@
       "icons": [],
       "index": 4
     }
+  ],
+  "ROUTES": {
+    "TOPIC": "/discussion-forum/topic/",
+    "DISCUSSION": "/discussion-forum/",
+    "CATEGORY": "/discussion-forum/category/",
+    "TAG": "/discussion-forum/tags/"
+  },
+  "MENUOPTIONS":[
+    {
+      "route": "all-discussions",
+      "label": "All discussions",
+      "enable": false
+    },
+    {   
+      "route": "categories",
+      "label": "Categories",
+      "enable": true
+    },
+    {
+      "route": "tags",
+      "label": "Tags",
+      "enable": true
+    },
+    {
+      "route": "my-discussion",
+      "label": "My discussion",
+      "enable": true
+    }
+    
   ]
 }

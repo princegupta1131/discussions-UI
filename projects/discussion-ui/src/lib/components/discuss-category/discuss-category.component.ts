@@ -1,11 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { DiscussionService } from '../../services/discussion.service';
+import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { DiscussionService, CONTEXT_PROPS } from '../../services/discussion.service';
 import { NSDiscussData } from './../../models/discuss.model';
 import { Router, ActivatedRoute } from '@angular/router';
+import { TelemetryUtilsService } from './../../telemetry-utils.service';
 
-
+import * as CONSTANTS from './../../common/constants.json';
 /* tslint:disable */
 import * as _ from 'lodash'
+import { ConfigService } from '../../services/config.service';
 /* tslint:enable */
 
 @Component({
@@ -13,11 +16,12 @@ import * as _ from 'lodash'
   templateUrl: './discuss-category.component.html',
   styleUrls: ['./discuss-category.component.css']
 })
-export class DiscussCategoryComponent implements OnInit {
+export class DiscussCategoryComponent implements OnInit, OnDestroy {
 
   categories: NSDiscussData.ICategorie[] = [];
 
-  categoryIds = ['1', '2', '6', '16'];
+  forumIds: any;
+  @Input() categoryIds;
 
   pageId = 0;
 
@@ -27,34 +31,67 @@ export class DiscussCategoryComponent implements OnInit {
 
   categoryId: any;
 
+  paramsSubscription: Subscription;
+
+  showLoader = false;
+
   constructor(
     public discussService: DiscussionService,
+    public configService: ConfigService,
     public router: Router,
-    public activatedRoute: ActivatedRoute) { }
+    public activatedRoute: ActivatedRoute,
+    private telemetryUtils: TelemetryUtilsService
+  ) { }
 
   ngOnInit() {
     /** It will look for the queryParams, if back button is clicked,
      * the queryParams will change and it will fetch the categories
      * if there is no queryParams available, then it will fetch the default categories of the forumIds
      */
-    this.activatedRoute.queryParams.subscribe((params) => {
-      if ( _.get(params, 'cid')) {
+    this.telemetryUtils.setContext([]);
+    this.telemetryUtils.logImpression(NSDiscussData.IPageName.CATEGORY);
+    this.forumIds = this.discussService.forumIds;
+    this.paramsSubscription = this.activatedRoute.queryParams.subscribe((params) => {
+      if (_.get(params, 'cid')) {
         this.navigateToDiscussionPage(_.get(params, 'cid'));
       } else {
         this.categories = [];
-        this.fetchAllAvailableCategories(this.categoryIds);
+        if (this.forumIds.length) {
+          this.fetchAllAvailableCategories(this.forumIds);
+        } else {
+          this.fetchAllCategories();
+        }
       }
     });
   }
 
   fetchAllAvailableCategories(ids) {
-    ids.forEach(cid => {
+    this.showLoader = true;
+    ids.forEach((cid) => {
       this.fetchCategory(cid).subscribe(data => {
+        this.showLoader = false;
         this.categories.push(data);
       }, error => {
         // TODO: Toast error
+        // error code check
+        this.discussService.showTrafficAlert(error);
         console.log('issue fetching category', error);
+        this.showLoader = false;
       });
+    });
+  }
+
+  fetchAllCategories() {
+    this.showLoader = true;
+    this.discussService.fetchAllCategories().subscribe(data => {
+      this.showLoader = false;
+      this.categories = data
+    }, error => {
+      // TODO: Toast error
+      // error code check
+      this.discussService.showTrafficAlert(error);
+      console.log('issue fetching category', error);
+      this.showLoader = false;
     });
   }
 
@@ -67,20 +104,27 @@ export class DiscussCategoryComponent implements OnInit {
    * if there is no children available the it will redirect to the topic list page
    */
   navigateToDiscussionPage(cid, slug?) {
-    this.fetchCategory(cid).subscribe(response => {
-      this.categoryId  = _.get(response, 'cid') ;
+    this.showLoader = true;
+    this.telemetryUtils.uppendContext({ id: cid, type: 'Category' });
+    this.discussService.fetchSingleCategoryDetails(cid).subscribe(response => {
+      this.showLoader = false;
+      this.categoryId = _.get(response, 'cid');
       this.isTopicCreator = _.get(response, 'privileges.topics:create') === true ? true : false;
       this.showStartDiscussionModal = false;
       if (_.get(response, 'children').length > 0) {
-        this.router.navigate([], { relativeTo: this.activatedRoute.parent, queryParams: { cid: this.categoryId }});
+        this.router.navigate([], { relativeTo: this.activatedRoute.parent, queryParams: { cid: this.categoryId } });
         this.categories = [];
         _.get(response, 'children').forEach(subCategoryData => {
           this.categories.push(subCategoryData);
         });
       } else {
-        this.router.navigate([`/discussion/category/`, `${slug}`]);
+        this.discussService.setContext(CONTEXT_PROPS.cid, this.categoryId);
+        this.router.navigate([`${this.configService.getRouterSlug()}${CONSTANTS.ROUTES.CATEGORY}`, `${this.categoryId}`]);
       }
     }, error => {
+      // error code check
+      this.discussService.showTrafficAlert(error);
+      this.showLoader = false;
       // TODO: Toast error
       console.log('issue fetching category', error);
     });
@@ -91,7 +135,16 @@ export class DiscussCategoryComponent implements OnInit {
   }
 
   closeModal(event) {
-    console.log('event', event);
     this.showStartDiscussionModal = false;
+  }
+
+  logTelemetry(event) {
+    this.telemetryUtils.logInteract(event, NSDiscussData.IPageName.CATEGORY);
+  };
+
+  ngOnDestroy() {
+    if (this.paramsSubscription) {
+      this.paramsSubscription.unsubscribe();
+    }
   }
 }

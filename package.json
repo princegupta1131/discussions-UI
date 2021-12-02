@@ -1,58 +1,68 @@
 {
-  "name": "sunbird-ed-discussions-ui",
+  "name": "sunbird-ed-discussions-ui-v8",
   "version": "1.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "test": "ng test",
+    "test": "jest",
+    "test:ci": "jest --silent --ci --w 2 --collectCoverage=true --coverageReporters=lcov",
     "lint": "ng lint",
     "e2e": "ng e2e",
     "copy:assets": "cp -r ./projects/discussion-ui/assets dist/discussion-ui/",
-    "build-lib": "ng build && npm run copy:assets"
+    "build-lib": "ng build && npm run copy:assets",
+    "build-doc": "compodoc -p tsconfig.doc.json"
   },
-  "private": true,
   "dependencies": {
-    "@angular/animations": "~7.2.0",
-    "@angular/common": "~7.2.0",
-    "@angular/compiler": "~7.2.0",
-    "@angular/core": "~7.2.0",
-    "@angular/forms": "~7.2.0",
-    "@angular/platform-browser": "~7.2.0",
-    "@angular/platform-browser-dynamic": "~7.2.0",
-    "@angular/router": "~7.2.0",
+    "@angular/animations": "^8.0.0",
+    "@angular/common": "^8.0.0",
+    "@angular/compiler": "^8.0.0",
+    "@angular/core": "^8.0.0",
+    "@angular/forms": "^8.0.0",
+    "@angular/platform-browser": "^8.0.0",
+    "@angular/platform-browser-dynamic": "^8.0.0",
+    "@angular/router": "^8.0.0",
     "copyfiles": "^2.4.1",
     "core-js": "^2.5.4",
-    "lodash-es": "^4.17.15",
-    "rxjs": "~6.3.3",
+    "dayjs": "^1.10.4",
+    "ngx-chips": "2.0.2",
+    "ngx-infinite-scroll": "^8.0.2",
+    "nodemon": "^2.0.7",
+    "rxjs": "~6.4.0",
     "tslib": "^1.9.0",
     "zone.js": "~0.8.26"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~0.13.0",
-    "@angular-devkit/build-ng-packagr": "~0.13.0",
-    "@angular/cli": "~7.3.8",
-    "@angular/compiler-cli": "~7.2.0",
-    "@angular/language-service": "~7.2.0",
+    "@angular-devkit/build-angular": "~0.801.3",
+    "@angular-devkit/build-ng-packagr": "~0.801.3",
+    "@angular/cli": "^8.0.0",
+    "@angular/compiler-cli": "^8.0.0",
+    "@angular/language-service": "^8.0.0",
+    "@project-sunbird/client-services": "4.2.3",
     "@types/jasmine": "~2.8.8",
     "@types/jasminewd2": "~2.0.3",
-    "@types/lodash": "^4.14.161",
+    "@types/jest": "^26.0.22",
     "@types/node": "~8.9.4",
     "codelyzer": "~4.5.0",
+    "compodoc": "^0.0.41",
     "jasmine-core": "~2.99.1",
     "jasmine-spec-reporter": "~4.2.1",
+    "jest": "^26.6.3",
     "karma": "~4.0.0",
     "karma-chrome-launcher": "~2.2.0",
     "karma-coverage-istanbul-reporter": "~2.0.1",
     "karma-jasmine": "~1.1.2",
     "karma-jasmine-html-reporter": "^0.2.2",
+    "lodash-es": "^4.17.20",
     "ng-packagr": "^4.2.0",
+    "ngx-chips": "2.0.2",
     "protractor": "~5.4.0",
+    "ts-jest": "^26.5.4",
     "ts-node": "~7.0.0",
     "tsickle": ">=0.34.0",
     "tslib": "^1.9.0",
     "tslint": "~5.11.0",
-    "typescript": "~3.2.2"
+    "typescript": "~3.4.0"
   },
   "description": "Sunbird discussions ui library",
   "repository": {
@@ -69,5 +79,44 @@
   "bugs": {
     "url": "https://github.com/Sunbird-Ed/discussions-UI/issues"
   },
-  "homepage": "https://github.com/Sunbird-Ed/discussions-UI#readme"
+  "homepage": "https://github.com/Sunbird-Ed/discussions-UI#readme",
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "tsConfig": "<rootDir>/projects/discussion-ui/tsconfig.spec.json"
+      }
+    },
+    "browser": false,
+    "rootDir": "./",
+    "roots": [
+      "<rootDir>/projects/discussion-ui/src/"
+    ],
+    "moduleDirectories": [
+      "node_modules"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "coveragePathIgnorePatterns": [],
+    "testMatch": [
+      "**/?(*.)(spec).ts"
+    ],
+    "restoreMocks": true,
+    "moduleFileExtensions": [
+      "js",
+      "jsx",
+      "json",
+      "ts",
+      "tsx"
+    ],
+    "setupFiles": [],
+    "transform": {
+      "^.+\\.(ts)$": "ts-jest"
+    },
+    "coverageReporters": [
+      "text",
+      "json"
+    ],
+    "transformIgnorePatterns": []
+  }
 }

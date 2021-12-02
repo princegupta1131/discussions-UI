@@ -1,84 +1,88 @@
+<lib-app-loader *ngIf="showLoader"></lib-app-loader>
+
 <div class="flex flex-1 flex-column my-discussion">
   <div class="flex-custom">
     <div class="profileCard">
       <div class="profilecard-content">
-      <div class="profile-header-image">
-        <lib-avatar-photo *ngIf="profilePhoto" [photoUrl]="profilePhoto" [name]="data.fullname || 'User'" size="xl-s">
-        </lib-avatar-photo>
-        <lib-avatar-photo *ngIf="!profilePhoto" [photoUrl]="profilePhoto" [name]="data.fullname || 'User'" size="xl-s">
-        </lib-avatar-photo>
-      </div>
-      <div class="flex-1">
-        <div class="mobile-margin text-capitalize name-label" [innerHTML]="data.fullname"></div>
-        <div class="department">{{department}}</div>
-        <div class="location">{{location}} </div>
-        <div class='email'>{{data.email || data.username}}</div>
-        <ng-container>
-          <div class="flex flex-1 custom margin-0 margin-top-xl">
-            <div class="flex flex-1 flex-custom-m">
-              <span class="flex mobile ">
-                <span class="ws-mat-default-text number">{{data.topiccount || 0 }}</span>
-                <span class="pad-4 labels">Discussions</span>
-              </span>
-              <span class="flex post-count-area mobile">
-                <span class="ws-mat-default-text number">{{data.postcount || 0 }}</span>
-                <span class="pad-4 labels">Posts</span>
-              </span>
+        <div class="profile-header-image">
+          <span class="box-text"><span class="circle-label"></span>{{ data?.username | splitInitials }}</span>
+        </div>
+        <div class="flex-1">
+          <div class="profile-label fs-1 name mb-4" [innerHTML]="data?.username"></div>
+          <div class="profile-label fnormal department mb-4">{{department}}</div>
+          <div class="profile-label fnormal location mb-4">{{location}} </div>
+          <div class='profile-label fnormal email mb-4'>{{data?.email || data?.username}}</div>
+          <ng-container>
+            <div class="fnormal mt-16">
+              <div class="flex flex-1 flex-custom-m">
+                <span class="flex mobile ">
+                  <span class="fnormal number">{{data?.topiccount || 0 }}</span>
+                  <span class="fnormal ml-4">Discussions</span>
+                </span>
+                <span class="flex post-count-area mobile">
+                  <span class="fnormal number">{{data?.postcount || 0 }}</span>
+                  <span class="fnormal ml-4">Posts</span>
+                </span>
+              </div>
+              <div class="flex flex-1" class="text-right mobile2">
+                <!-- Enable lated when other user can visit your profile -->
+                <!-- <span class="noocoments" mat-card-subtitle>Last online {{data?.lastonline | pipeRelativeTime}}</span> -->
+              </div>
             </div>
-            <div class="flex flex-1" class="text-right mobile2">
-              <!-- Enable lated when other user can visit your profile -->
-              <!-- <span class="noocoments" mat-card-subtitle>Last online {{data.lastonline | pipeRelativeTime}}</span> -->
-            </div>
-          </div>
-        </ng-container>
+          </ng-container>
+        </div>
       </div>
-    </div>
     </div>
   </div>
 
   <ng-container>
-    <div class="recent-tabs">
+    <div class="recent-tabs pb-8">
       <div class="tabs-content">
         <div class="tabs-filter">
-          <a href="javascript:void(0)" role="button" class="filter-option active" [ngClass]="{'ws-mat-accent-border-active' : currentFilter === 'timestamp',
+          <button role="button" class="filter-option df-filter-option" [ngClass]="{'tabs-active' : currentFilter === 'timestamp',
                               'ws-mat-accent-border font-medium':currentFilter !== 'timestamp'}"
-            (click)="filter('timestamp')">
-            Recent posts </a>
-          <a href="javascript:void(0)" role="button" class="filter-option" [ngClass]="{'ws-mat-accent-border-active' : currentFilter === 'best',
-                              'ws-mat-accent-border font-medium':currentFilter !== 'best'}" (click)="filter('best')">
-            Best posts </a>
-          <a href="javascript:void(0)" role="button" class="filter-option" [ngClass]="{'ws-mat-accent-border-active' : currentFilter === 'saved',
+            (click)="filter('timestamp', true);logTelemetry($event)" id="recent-post">
+            Recent posts </button>
+          <button role="button" class="filter-option df-filter-option" [ngClass]="{'tabs-active' : currentFilter === 'best',
+                              'ws-mat-accent-border font-medium':currentFilter !== 'best'}"
+            (click)="filter('best', true);logTelemetry($event)" id="best-post">
+            Best posts </button>
+          <button role="button" class="filter-option df-filter-option" [ngClass]="{'tabs-active' : currentFilter === 'saved',
                                           'ws-mat-accent-border font-medium':currentFilter !== 'saved'}"
-            (click)="filter('saved')">
-            Saved posts </a>
-          <!-- <a href="javascript:void(0)" role="button" class="filter-option" [ngClass]="{'ws-mat-accent-border-active' : currentFilter === 'watched',
+            (click)="filter('saved', true);logTelemetry($event)" id="saved-post">
+            Saved posts </button>
+          <!-- <button role="button" class="filter-option df-filter-option" [ngClass]="{'ws-mat-accent-border-active' : currentFilter === 'watched',
                                             'ws-mat-accent-border font-medium':currentFilter !== 'watched'}" mat-button
             (click)="filter('watched')">
-            Watched </a> -->
-          <a href="javascript:void(0)" role="button" class="filter-option" [ngClass]="{'ws-mat-accent-border-active' : currentFilter === 'upvoted',
+            Watched </button> -->
+          <button role="button" class="filter-option df-filter-option" [ngClass]="{'tabs-active' : currentFilter === 'upvoted',
                                               'ws-mat-accent-border font-medium':currentFilter !== 'upvoted'}"
-            (click)="filter('upvoted')">
-            Upvoted </a>
-          <a href="javascript:void(0)" role="button" class="filter-option" [ngClass]="{'ws-mat-accent-border-active' : currentFilter === 'downvoted',
+            (click)="filter('upvoted', true);logTelemetry($event)" id="upvoted-post">
+            Upvoted </button>
+          <button role="button" class="filter-option df-filter-option" [ngClass]="{'tabs-active' : currentFilter === 'downvoted',
                                                 'ws-mat-accent-border font-medium':currentFilter !== 'downvoted'}"
-            (click)="filter('downvoted')">
-            Downvoted </a>
+            (click)="filter('downvoted', true);logTelemetry($event)" id="downvoted-post">
+            Downvoted </button>
         </div>
       </div>
     </div>
   </ng-container>
-  <ng-container *ngIf="discussionList && discussionList.length > 0">
-    <ng-container *ngFor="let data of discussionList">
-      <div (click)="navigateToDiscussionDetails(data)">
-        <lib-discuss-card [discussionData]="data"></lib-discuss-card>
-      </div>
-    </ng-container>
-  </ng-container>
+  <div *ngIf="discussionList && discussionList.length > 0" class="topic-list-container" #scrollContainerHeight>
+    <!--infinite scroll-->
+    <div [infiniteScrollContainer]="'.topic-list-container'" infinite-scroll class="infinite-scroll"
+      [scrollWindow]="false" [infiniteScrollDistance]="InfiniteScrollConfig.modalScrollDistance" [fromRoot]="true"
+      [infiniteScrollThrottle]="InfiniteScrollConfig.modalScrollThrottle" (scrolled)="onModalScrollDown()">
+      <ng-container *ngFor="let data of discussionList">
+        <div (click)="navigateToDiscussionDetails(data);logTelemetry($event)" id="discuss-card">
+          <lib-discuss-card [discussionData]="data"></lib-discuss-card>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+  <lib-app-loader *ngIf="showLoader"></lib-app-loader>
   <ng-container *ngIf="!(discussionList && discussionList.length > 0)">
-    <div class="mat-card margin-bottom-l">
-      <div>
-        <div>No Data</div>
-      </div>
+    <div class="discuss-card-content cursor-pointer" tabindex="0">
+      <div class="no-data-label">No Data</div>
       <div>
         <span>&nbsp;</span>
       </div>

@@ -7,6 +7,8 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Routes } from '@angular/router';
 import { DiscussHomeComponent } from './../components/discuss-home/discuss-home.component';
+import { DiscussAllComponent } from './../components/discuss-all/discuss-all.component';
+import { TagAllDiscussionComponent } from './../components/tag-all-discussion/tag-all-discussion.component';
 
 
 const routes: Routes = [
@@ -15,9 +17,14 @@ const routes: Routes = [
     component: LibEntryComponent,
     children: [
       {
-        path: 'home',
+        path: '',
         pathMatch: 'full',
-        component: DiscussHomeComponent
+        component: DiscussCategoryComponent
+      },
+      {
+        path: 'all-discussions',
+        pathMatch: 'full',
+        component: DiscussAllComponent
       },
       {
         path: 'categories',
@@ -28,6 +35,12 @@ const routes: Routes = [
         path: 'tags',
         pathMatch: 'full',
         component: DiscussTagsComponent
+      },
+      // TODO: ADD LATER
+      {
+        path: 'tags/tag-discussions',
+        pathMatch: 'full',
+        component: TagAllDiscussionComponent
       },
       {
         path: 'my-discussion',
@@ -40,7 +53,7 @@ const routes: Routes = [
         component: DiscussHomeComponent
       },
       {
-        path: 'category/:topicId/:slug',
+        path: 'topic/:topicId/:slug',
         pathMatch: 'full',
         component: DiscussionDetailsComponent
       }

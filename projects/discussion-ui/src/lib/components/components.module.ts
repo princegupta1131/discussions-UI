@@ -1,4 +1,6 @@
+import { PipesModule } from './../pipes/pipes.module';
 import { DiscussionService } from './../services/discussion.service';
+import { ConfigService } from './../services/config.service';
 import { HttpClientModule } from '@angular/common/http';
 import { ElementsModule } from './../elements/elements.module';
 import { NgModule } from '@angular/core';
@@ -11,8 +13,10 @@ import { MyDiscussionComponent } from './my-discussion/my-discussion.component';
 import { DiscussionDetailsComponent } from './discussion-details/discussion-details.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DiscussStartComponent } from './discuss-start/discuss-start.component';
-
-
+import { TagInputModule } from 'ngx-chips';
+import { DiscussAllComponent } from './discuss-all/discuss-all.component';
+import { TagAllDiscussionComponent } from './tag-all-discussion/tag-all-discussion.component';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 @NgModule({
   declarations: [
     SidePannelComponent,
@@ -22,13 +26,18 @@ import { DiscussStartComponent } from './discuss-start/discuss-start.component';
     MyDiscussionComponent,
     DiscussionDetailsComponent,
     DiscussStartComponent,
+    DiscussAllComponent,
+    TagAllDiscussionComponent,
   ],
   imports: [
     CommonModule,
     HttpClientModule,
     ElementsModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    TagInputModule,
+    PipesModule,
+    InfiniteScrollModule
   ],
   exports: [
     SidePannelComponent,
@@ -37,10 +46,13 @@ import { DiscussStartComponent } from './discuss-start/discuss-start.component';
     DiscussTagsComponent,
     MyDiscussionComponent,
     DiscussionDetailsComponent,
-    DiscussStartComponent
+    DiscussStartComponent,
+    // TODO: Add this components
+    //  DiscussAllComponent,
+    TagAllDiscussionComponent
   ],
   providers: [
-    DiscussionService
+    DiscussionService, ConfigService
   ]
 })
 export class ComponentsModule { }
