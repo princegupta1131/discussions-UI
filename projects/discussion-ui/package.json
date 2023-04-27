@@ -1,6 +1,6 @@
 {
   "name": "@project-sunbird/discussions-ui",
-  "version": "5.3.2",
+  "version": "5.3.0-beta.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Sunbird-Ed/discussions-UI.git"
@@ -15,12 +15,11 @@
   },
   "homepage": "https://github.com/Sunbird-Ed/discussions-UI.git#readme",
   "peerDependencies": {
-    "@angular/common": "^13.4.0",
-    "@angular/core": "^13.4.0",
+    "@angular/common": "^14.3.0",
+    "@angular/core": "^14.3.0",
     "@project-sunbird/client-services": "5.1.2",
     "lodash-es": "^4.17.20",
-    "ngx-chips": ">=2.2.0",
-    "ngx-infinite-scroll": ">=8.0.2"
+    "ngx-chips": ">=2.2.0"
   },
   "description": "This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.2.0.",
   "scripts": {
