@@ -5,15 +5,14 @@
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
-    "module": "es2015",
+    "module": "es2020",
     "moduleResolution": "node",
-    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "importHelpers": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es5",
+    "target": "es2020",
     "typeRoots": [
       "node_modules/@types"
     ],
@@ -29,5 +28,8 @@
         "dist/discussion-ui/*"
       ]
     }
-  }
+  },
+  "angularCompilerOptions": {
+  "compilationMode": "partial"
+  } 
 }
