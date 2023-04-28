@@ -21,8 +21,6 @@ jobs:
           paths:
             - .yarn/cache
             - .yarn/unplugged
-      - store_artifacts:
-          path: coverage
       - run:
           name: install sonar scanner
           command: sudo npm install -g sonarqube-scanner@2.7.0
