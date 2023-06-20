@@ -14,13 +14,13 @@
           "options": {
             "tsConfig": "projects/discussion-ui/tsconfig.lib.json",
             "project": "projects/discussion-ui/ng-package.json"
-          }
-        ,          "configurations": {
+          },
+          "configurations": {
             "production": {
               "tsConfig": "projects/discussion-ui/tsconfig.lib.prod.json"
             }
           }
-},
+        },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
@@ -56,7 +56,7 @@
             ],
             "styles": [
               "demo/src/styles.scss",
-              "demo/src/assets/discussion-ui/assets/styles/global.scss"
+              "demo/src/assets/discussion-ui/styles/global.scss"
             ],
             "scripts": [],
             "vendorChunk": true,
