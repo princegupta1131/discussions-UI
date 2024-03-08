@@ -16,10 +16,6 @@
     "build-doc": "compodoc -p tsconfig.doc.json",
     "postinstall": "ngcc --properties es2015 browser module main --first-only --create-ivy-entry-points"
   },
-  "engines": {
-    "node": ">=14.13.0",
-    "npm": ">=8.19.3"
-  },
   "dependencies": {
     "@angular/animations": "15.2.10",
     "@angular/common": "15.2.10",
