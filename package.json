@@ -17,7 +17,7 @@
     "postinstall": "ngcc --properties es2015 browser module main --first-only --create-ivy-entry-points"
   },
   "engines": {
-    "node": ">=16.14",
+    "node": ">=16.13",
     "npm": ">=8.19.3"
   },
   "dependencies": {
